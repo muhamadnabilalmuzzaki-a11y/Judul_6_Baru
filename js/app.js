@@ -126,11 +126,21 @@ const editEmail = document.getElementById('edit-email');
 async function openEditModal(id) {
     try {
         // Percobaan 6-3 Langkah 2
+        const response = await fetch(`${API_URL}?id=${id}`);
+        const result = await response.json();
 
         if (response.ok && result.data) {
                        
             // Percobaan 6-3 Langkah 3
-            
+            editId.value = result.data.id;
+            editnpm.value = result.data.npm;
+            editNama.value = result.data.nama;
+            editProdi.value = result.data.program_studi;
+            editAngkatan.value = result.data.angkatan;
+            editEmail.value = result.data.email;
+
+            modalEdit.classList.add('active');
+
         } else {
             showAlert(result.message || 'Gagal memuat detail mahasiswa', 'danger');
         }
@@ -141,6 +151,7 @@ async function openEditModal(id) {
 
 function closeEditModal() {
      // Percobaan 6-3 Langkah 4
+     if (modalEdit) modalEdit.classList.remove('active');
      
 }
 
@@ -164,9 +175,19 @@ if (formEdit) {
 
         try {
              // Percobaan 6-3 Langkah 5
+             const res = await fetch(`${API_URL}?id=${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+             });
+             const data = await res.json();
 
             if (res.ok && data.status === 'success') {
-             // Percobaan 6-3 Langkah 6   
+             // Percobaan 6-3 Langkah 6  
+             showAlert(data.message, 'success');
+             closeEditModal();
+             loadMahasiswa();
+
             } else {
                 showAlert(data.message || 'Gagal memperbarui data', 'danger');
             }
@@ -180,14 +201,26 @@ if (formEdit) {
 if (formTambah) {
     formTambah.addEventListener('submit', async function (event) {
         // Percobaan 6-2 Langkah 3 
+        event.preventDefault();
 
         const dataMahasiswa = {
             // Percobaan 6-2 Langkah 4
-
+            npm: document.getElementById('npm').value.trim(),
+            nama: document.getElementById('nama').value.trim(),
+            program_studi: document.getElementById('program_studi').value,
+            angkatan: parseInt(document.getElementById('angkatan').value,10),
+            email: document.getElementById('email').value.trim()
         };
 
         try {
             // Percobaan 6-2 Langkah 5
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json'},
+                body: JSON.stringify(dataMahasiswa)
+            });
+
+            const result = await response.json();
             
             if (response.ok && result.status === 'success') {
                 showAlert(result.message, 'success');
@@ -205,11 +238,22 @@ if (formTambah) {
 // 5. Fetch API DELETE: Menghapus Data Secara Asinkron
 async function deleteMahasiswa(id, nama) {
     // Percobaan 6-4 Langkah 2
+    if(!confirm(`Apakah Anda yakin ingin menghapus mahasiswa "${nama}"?`)) return;
     
     try {
         // Percobaan 6-4 Langkah 3
+        const response = await fetch(`${API_URL}?id=${id}`, { 
+            method: 'DELETE'
+        });
+        const result = await response.json();
         
         // Percobaan 6-4 Langkah 4
+        if (response.ok && result.status === 'success') {
+            showAlert(result.message, 'success');
+            loadMahasiswa(); 
+        } else {
+            showAlert(result.message || 'Gagal menghapus data', 'danger');
+        }
 
         
     } catch (error) {
@@ -222,8 +266,13 @@ if (inputSearch) {
     let timer = null;
     inputSearch.addEventListener('input', function () {
     // Percobaan 6-4 Langkah 5
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+        loadMahasiswa(inputSearch.value.trim());
+    }, 300);
 
     });
 }
 
 // Inisialisasi: Panggil Data Pertama Kali
+loadMahasiswa();
